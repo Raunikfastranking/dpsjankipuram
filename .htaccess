@@ -1,0 +1,42 @@
+RewriteEngine On
+
+<IfModule mod_headers.c>
+Header set Access-Control-Allow-Origin "*"
+Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Production: redirect /Site requests to live site (skip localhost)
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)$ [NC]
+RewriteCond %{REQUEST_URI} ^/Site [NC]
+RewriteRule ^.*$ https://dpsjankipuram.com/? [R=301,L]
+
+# Redirect www to non-www (skip for localhost)
+RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1) [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
+# Redirect all HTTP to HTTPS (skip /.well-known for Let's Encrypt / ACME, skip localhost)
+RewriteCond %{REQUEST_URI} !^/\.well-known [NC]
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1) [NC]
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+
+# Redirect .php to clean URL
+RewriteCond %{THE_REQUEST} /([^.]+)\.php [NC]
+RewriteRule ^ /%1 [R=301,L]
+
+# Internally rewrite clean URLs to actual .php files
+# REQUEST_FILENAME-based -f check works when the site lives in a subfolder of DocumentRoot
+# (DOCUMENT_ROOT/$1.php breaks because $1 is only the final path segment).
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+)$ $1.php [L]
+# -----------------------------
+
+# Friendly URL rewrites
+RewriteRule ^home index.php [NC,L]
+RewriteRule ^blog/([A-Za-z0-9-]+)  detail.php?slug=$1  [NC,L]
+RewriteRule ^view/([A-Za-z0-9-]+)  detail-view.php?slug=$1  [NC,L]
