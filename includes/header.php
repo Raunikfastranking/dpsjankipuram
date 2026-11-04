@@ -119,163 +119,507 @@ $pageData = $pageDataMap[$currentPage] ?? null; // null if page not found
     </a>
 </div>
 
-<div id="popupForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-[9998]">
-    <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md relative">
+<style>
+/* Enquiry popup — match reference design (uniform inputs/dropdowns) */
+#popupForm .enquiry-popup-box {
+    width: 100%;
+    max-width: 520px;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 16px 22px 14px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+#popupForm .enquiry-popup-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+    margin: 0 0 8px;
+    line-height: 1.2;
+}
+#ee-form-20 {
+    --ee-primary-color: #005224;
+    --ee-warning-color: #005224;
+    --ee-border-color: #cfcfcf;
+    width: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+}
+#ee-form-20 .ee-form-widget,
+#ee-form-20 .ee-form-widget .ee-container,
+#ee-form-20 .ee-form-widget-form,
+#ee-form-20 .ee-form-widget .modal-content,
+#ee-form-20 .ee-form-widget .modal-body {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+#ee-form-20 .modal-header,
+#ee-form-20 .ee-form-heading {
+    display: none !important;
+}
+#ee-form-20 .ee-form-body,
+#ee-form-20 .ee-form-body.TWO_COLUMNS {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    gap: 0 !important;
+}
+#ee-form-20 .ee-form-body > .ee-row,
+#ee-form-20 .ee-form-body.TWO_COLUMNS > .ee-row,
+#ee-form-20 .ee-form-body.TWO_COLUMNS > .ee-row:not(.full-width),
+#ee-form-20 .ee-form-body.TWO_COLUMNS > .ee-row.full-width {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 5px !important;
+    float: none !important;
+    padding: 0 !important;
+}
+#ee-form-20 .ee-form-widget .ee-row > label:not(:has(input[type="checkbox"])) {
+    display: none !important;
+}
+#ee-form-20 .ee-form-widget .ee-row label:has(input[type="checkbox"]),
+#ee-form-20 .ee-form-widget .ee-row .checkbox-container,
+#ee-form-20 .ee-form-widget .ee-row .form-check {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+    color: #555 !important;
+    font-weight: 400 !important;
+}
+
+/* ===== Uniform field shell ===== */
+#ee-form-20 .ee-form-widget input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="search"]):not([type="tel"]),
+#ee-form-20 .ee-form-widget select,
+#ee-form-20 .ee-form-widget textarea,
+#ee-form-20 .ee-form-widget .select2-container .select2-selection--single,
+#ee-form-20 .ee-form-widget .select2-container .select2-selection--multiple {
+    width: 100% !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 6px 12px !important;
+    border: 1px solid #cfcfcf !important;
+    border-radius: 4px !important;
+    background-color: #fff !important;
+    color: #333 !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 22px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+#ee-form-20 .ee-form-widget input::placeholder,
+#ee-form-20 .ee-form-widget textarea::placeholder {
+    font-size: 14px !important;
+    color: #808080 !important;
+    opacity: 1 !important;
+}
+#ee-form-20 .ee-form-widget input:focus,
+#ee-form-20 .ee-form-widget select:focus,
+#ee-form-20 .ee-form-widget textarea:focus,
+#ee-form-20 .ee-form-widget .select2-container--default.select2-container--focus .select2-selection--single,
+#ee-form-20 .ee-form-widget .select2-container--default.select2-container--open .select2-selection--single,
+#ee-form-20 .ee-form-widget .select2-container--default .select2-selection--single:focus {
+    border: 1px solid #999 !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+#ee-form-20 .ee-form-widget .in-valid,
+#ee-form-20 .ee-form-widget .in-valid:focus,
+#ee-form-20 .ee-form-widget select.in-valid,
+#ee-form-20 .in-valid + .select2-container--default .select2-selection--single {
+    border: 1px solid #cfcfcf !important;
+    box-shadow: none !important;
+}
+
+/* Native select arrow */
+#ee-form-20 .ee-form-widget select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M1.4 0.6L6 5.2 10.6.6 12 2 6 8 0 2z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 10px 7px !important;
+    padding-right: 32px !important;
+    cursor: pointer !important;
+}
+
+/* Select2 match native fields */
+#ee-form-20 .ee-form-widget .select2-container {
+    width: 100% !important;
+    display: block !important;
+}
+#ee-form-20 .ee-form-widget .select2-container .select2-selection--single {
+    display: flex !important;
+    align-items: center !important;
+}
+#ee-form-20 .ee-form-widget .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #808080 !important;
+    line-height: 22px !important;
+    padding: 0 !important;
+    font-size: 14px !important;
+}
+#ee-form-20 .ee-form-widget .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 34px !important;
+    top: 1px !important;
+    right: 6px !important;
+}
+#ee-form-20 .ee-form-widget .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #666 transparent transparent transparent !important;
+    border-width: 6px 5px 0 5px !important;
+    margin-top: -2px !important;
+}
+#ee-form-20 .ee-form-widget .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent #666 transparent !important;
+    border-width: 0 5px 6px 5px !important;
+}
+.select2-container--open {
+    z-index: 10050 !important;
+}
+.select2-dropdown {
+    z-index: 10051 !important;
+    border: 1px solid #cfcfcf !important;
+    border-radius: 4px !important;
+}
+
+/* Mobile number — intl-tel-input (.iti), match clean left flag/+91 layout */
+#ee-form-20 .ee-form-widget .iti {
+    width: 100% !important;
+    display: block !important;
+    position: relative !important;
+}
+#ee-form-20 .ee-form-widget .iti input[type="tel"],
+#ee-form-20 .ee-form-widget .iti input[type="text"] {
+    width: 100% !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-right: 12px !important;
+    padding-left: 110px !important; /* space for flag + +91 + arrow */
+    border: 1px solid #cfcfcf !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+    color: #333 !important;
+    font-size: 14px !important;
+    line-height: 36px !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+#ee-form-20 .ee-form-widget .iti input[type="tel"]::placeholder,
+#ee-form-20 .ee-form-widget .iti input[type="text"]::placeholder {
+    font-size: 14px !important;
+    color: #808080 !important;
+    line-height: 36px !important;
+    opacity: 1 !important;
+}
+#ee-form-20 .ee-form-widget .iti__flag-container {
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    padding: 1px !important;
+    z-index: 2 !important;
+}
+#ee-form-20 .ee-form-widget .iti--separate-dial-code .iti__selected-flag,
+#ee-form-20 .ee-form-widget .iti--allow-dropdown .iti__selected-flag {
+    height: 100% !important;
+    min-height: 34px !important;
+    padding: 0 10px 0 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background-color: #f0f0f0 !important;
+    border-radius: 3px 0 0 3px !important;
+    box-sizing: border-box !important;
+}
+#ee-form-20 .ee-form-widget .iti__selected-dial-code {
+    font-size: 14px !important;
+    color: #333 !important;
+    margin-left: 4px !important;
+    line-height: 1 !important;
+}
+#ee-form-20 .ee-form-widget .iti__flag {
+    transform: scale(1) !important;
+}
+#ee-form-20 .ee-form-widget .iti__arrow {
+    margin-left: 4px !important;
+    border-top-color: #555 !important;
+}
+/* Fallback if widget uses countryCode-input instead of iti */
+#ee-form-20 .ee-form-widget .inline-inputs {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    width: 100% !important;
+}
+#ee-form-20 .ee-form-widget .countryCode-input {
+    width: 90px !important;
+    min-width: 90px !important;
+    height: 36px !important;
+    margin: 0 !important;
+    border: 1px solid #cfcfcf !important;
+    border-right: none !important;
+    border-radius: 4px 0 0 4px !important;
+    background: #f0f0f0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+}
+#ee-form-20 .ee-form-widget .countryCode-input + input {
+    flex: 1 1 auto !important;
+    width: calc(100% - 90px) !important;
+    height: 36px !important;
+    padding: 0 12px !important;
+    line-height: 36px !important;
+    border: 1px solid #cfcfcf !important;
+    border-radius: 0 4px 4px 0 !important;
+    font-size: 14px !important;
+}
+
+/* Captcha row */
+#ee-form-20 .ee-form-widget .captcha-container,
+#ee-form-20 .ee-form-widget .ee-captcha,
+#ee-form-20 .ee-form-widget [class*="captch"] {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+#ee-form-20 .ee-form-widget .captcha-container input,
+#ee-form-20 .ee-form-widget .ee-captcha input {
+    flex: 1 1 auto !important;
+    width: auto !important;
+}
+
+/* Checkbox / consent */
+#ee-form-20 .ee-form-widget input[type="checkbox"] {
+    width: 16px !important;
+    height: 16px !important;
+    min-height: 16px !important;
+    max-height: 16px !important;
+    margin-right: 8px !important;
+    margin-top: 2px !important;
+    accent-color: #005224;
+    flex-shrink: 0 !important;
+}
+#ee-form-20 .ee-form-widget .ee-row .checkbox-label,
+#ee-form-20 .ee-form-widget .ee-row label:has(input[type="checkbox"]) span,
+#ee-form-20 .ee-form-widget .ee-row label:has(input[type="checkbox"]),
+#ee-form-20 .ee-form-widget .ee-row .form-check-label {
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+    color: #555 !important;
+}
+
+/* Submit */
+#ee-form-20 .ee-form-footer,
+#ee-form-20 .btnContainer {
+    display: block !important;
+    width: 100% !important;
+    margin-top: 6px !important;
+    text-align: center !important;
+}
+#ee-form-20 .btn.btn-submit,
+#ee-form-20 button.btn-submit {
+    width: 100% !important;
+    height: 40px !important;
+    background-color: #005224 !important;
+    border: 1px solid #005224 !important;
+    color: #fff !important;
+    border-radius: 9999px !important;
+    padding: 8px 16px !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    box-shadow: none !important;
+}
+#ee-form-20 .btn.btn-submit:hover,
+#ee-form-20 button.btn-submit:hover {
+    background-color: #003618 !important;
+    border-color: #003618 !important;
+}
+
+/* ExtraaEdge Thank You modal must appear ABOVE enquiry popup (z-9998) */
+.jquery-modal,
+.jquery-modal.blocker,
+.blocker.jquery-modal,
+.blocker.current,
+div.jquery-modal {
+    z-index: 10060 !important;
+}
+.jquery-modal .modal,
+.jquery-modal .modal-content,
+.ee-form-widget-feedback,
+.ee-form-widget .modal {
+    z-index: 10061 !important;
+    position: relative;
+}
+.ee-form-widget #overlay,
+#overlay {
+    z-index: 10060 !important;
+}
+</style>
+<div id="popupForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-[9998] p-4">
+    <div class="enquiry-popup-box relative">
         <!-- Close Button -->
-        <button id="closePopup" class="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl font-bold">
+        <button id="closePopup" class="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl font-bold z-10 leading-none">
             &times;
         </button>
-        <h2 class="text-2xl font-semibold mb-4">Enquiry Form</h2>
-       <form class="space-y-4" id="enquiryForm" action="" method="POST">
-            <div>
-                 <select name="session" required id="esession"
-        class="w-full border border-gray-300 p-2 rounded-md text-gray-500">
-        <option value="" disabled selected>Enquiry For Session</option>
-        <?php
-        $sessions = include "session-api.php";
-        foreach ($sessions as $item): 
-        ?>
-            <option value="<?= htmlspecialchars($item['session'] ?? '') ?>">
-                <?= htmlspecialchars($item['session'] ?? 'Unknown Session') ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-             </div>
-           <div>
-        <select name="class-selection" required id="egrade" class="w-full border border-gray-300 p-2 rounded-md text-gray-500">
-            <option value="" disabled selected>Select Grade</option>
-
-            <?php
-            $grades = include 'grade-api.php';
-
-            if (!empty($grades)) {
-
-                $gradeOrder = [
-    'P.G', 'Nursery', 'Prep',
-    'I', 'II', 'III', 'IV', 'V',
-    'VI', 'VII', 'VIII', 'IX',
-    'X', 'XI', 'XII'
-];
-
-                // remove duplicates
-                $uniqueGrades = [];
-                foreach ($grades as $g) {
-                    $grade = trim($g['grades']);
-                    if ($grade && !in_array($grade, $uniqueGrades)) {
-                        $uniqueGrades[] = $grade;
-                    }
-                }
-
-                // safe sorting
-                usort($uniqueGrades, function ($a, $b) use ($gradeOrder) {
-
-                    $posA = array_search($a, $gradeOrder);
-                    $posB = array_search($b, $gradeOrder);
-
-                    $posA = ($posA === false) ? 999 : $posA;
-                    $posB = ($posB === false) ? 999 : $posB;
-
-                    return $posA - $posB;
-                });
-
-                foreach ($uniqueGrades as $gr):
-            ?>
-            <option value="<?= htmlspecialchars($gr, ENT_QUOTES, 'UTF-8') ?>">
-            <?= htmlspecialchars($gr, ENT_QUOTES, 'UTF-8') ?>
-            </option>
-            <?php endforeach; } else { ?>
-            <option value="">No grades available</option>
-            <?php } ?>
-
-        </select>
-        <span id="classError" class="text-red-500 text-sm hidden">Please select a class.</span>
-    </div>
-
-            <div>
-                <input type="text" name="student-name" id="estudent_name" placeholder="Student Name"
-                    class="w-full border border-gray-300 p-2 rounded-md" required maxlength="50">
-                <span id="student-error" class="text-red-500 text-sm mt-1 hidden">Only letters and spaces
-                    allowed.</span>
-            </div>
-
-            <div>
-                <input type="text" name="parent-name" id="eparent_name" placeholder="Parents Name"
-                    class="w-full border border-gray-300 p-2 rounded-md" required maxlength="50">
-                <span id="parent-error" class="text-red-500 text-sm mt-1 hidden">Only letters and spaces allowed.</span>
-            </div>
-
-            <div>
-                <input type="text" name="mobile" id="emobile" placeholder="Mobile No."
-                    class="w-full border border-gray-300 p-2 rounded-md" required maxlength="10">
-                <span id="mobile-error" class="text-red-500 text-sm mt-1 hidden">Please enter valid phone number</span>
-            </div>
-
-            <div>
-                <input type="text" name="email" id="eemail" placeholder="E-mail"
-                    class="w-full border border-gray-300 p-2 rounded-md" required>
-                <span id="email-error" class="text-red-500 text-sm mt-1 hidden">Please enter a valid email
-                    address.</span>
-            </div>
-
-         <div class="mt-4 relative customSelect">
-               <select id="ecity" name="ecity" class="hidden">
-    <option value="">Select City</option>
-    <?php
-    $cities = include 'get-city.php';
-    ?>
-    <?php if (!empty($cities)): ?>
-        <?php foreach ($cities as $city): ?>
-            <?php if (empty($city['name'])) continue; ?>
-            <option value="<?= htmlspecialchars($city['name'], ENT_QUOTES, 'UTF-8') ?>">
-                <?= htmlspecialchars($city['name'], ENT_QUOTES, 'UTF-8') ?>
-            </option>
-        <?php endforeach; ?>
-    <?php else: ?>
-        <option value="">No cities available</option>
-    <?php endif; ?>
-</select>
-
-
-                <!-- Fake dropdown display -->
-                <div class="border border-gray-300 p-[11px] rounded-md bg-white cursor-pointer flex justify-between items-center">
-                    <span class="selected-text text-[#808080cc]">Select City</span>
-                    <span>▼</span>
-                </div>
-
-                <!-- Dropdown options -->
-                <div class="absolute mt-1 border border-gray-300 rounded-md bg-white shadow-md hidden z-50 w-full">
-                    <input type="text" placeholder="Search..."
-                        class="w-full p-2 border-b border-gray-300 outline-none">
-                    <ul class="max-h-48 overflow-y-auto"></ul>
-                </div>
-
-            </div>
-            <span id="city-error" class="text-red-500 text-sm mt-1 hidden">
-                Please select a city.
-            </span>
-            <!-- Pincode -->
-            <div>
-                <input type="text" name="pincode" id="epincode" placeholder="Enter your Pincode"
-                    class="w-full border border-gray-300 p-2 rounded-md" maxlength="6"
-                    oninput="this.value=this.value.replace(/\D/g,'')" required>
-                <span id="pincode-error" class="text-red-500 text-sm hidden">Please enter a valid Pincode.</span>
-            </div>
-
-
-            <div class="flex items-start gap-2">
-                <input type="checkbox" id="popupCheckbox" required />
-                <label for="popupCheckbox" class="text-sm">I agree to <a href="termsandconditions"
-                        class="text-blue-600 underline">Terms
-                        and Conditions</a>.</label>
-                <span id="checkboxError" class="text-red-500 text-sm hidden">You must agree to the terms and
-                    conditions.</span>
-            </div>
-            <input type="hidden" id="source" value="">
-            <button type="submit" id="submitBtn"
-                class="w-full py-2 bg-blue-main text-white rounded-md hover:[#FED72B] transition">Submit</button>
-        </form>
+        <h2 class="enquiry-popup-title">Enquiry Form</h2>
+        <div id="ee-form-20"></div>
     </div>
 </div>
+<script>
+(function () {
+    window.ee_form_widget_baseurl = "https://eeconfigstaticfiles.blob.core.windows.net/staticfiles/ee-form-widget/";
+    var eeFormInited = false;
+    var eeFormLoading = false;
+
+    window.initEeEnquiryForm = function () {
+        if (eeFormInited || eeFormLoading) return;
+        eeFormLoading = true;
+
+        if (!document.getElementById("__formWidgetCss")) {
+            var e = document.createElement("link");
+            e.id = "__formWidgetCss";
+            e.rel = "stylesheet";
+            e.href = window.ee_form_widget_baseurl + "css/stylesheet.min.css";
+            e.type = "text/css";
+            document.getElementsByTagName("head")[0].appendChild(e);
+        }
+
+        function styleEeEnquiryForm() {
+            var root = document.getElementById("ee-form-20");
+            if (!root) return;
+            root.style.setProperty("--ee-primary-color", "#005224");
+            root.style.setProperty("--ee-border-color", "#cfcfcf");
+
+            root.querySelectorAll(".btn-submit, button[type='submit']").forEach(function (btn) {
+                btn.style.setProperty("background-color", "#005224", "important");
+                btn.style.setProperty("border-color", "#005224", "important");
+                btn.style.setProperty("color", "#fff", "important");
+                btn.style.setProperty("width", "100%", "important");
+                btn.style.setProperty("border-radius", "9999px", "important");
+            });
+
+            root.querySelectorAll(".ee-form-body > .ee-row").forEach(function (row) {
+                row.style.setProperty("width", "100%", "important");
+                row.style.setProperty("margin-left", "0", "important");
+                row.style.setProperty("margin-right", "0", "important");
+                row.style.setProperty("float", "none", "important");
+            });
+
+            // Force same border/height on native + select2 fields (skip tel — handled by .iti)
+            root.querySelectorAll("input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='tel']), select, textarea").forEach(function (el) {
+                el.style.setProperty("border", "1px solid #cfcfcf", "important");
+                el.style.setProperty("outline", "none", "important");
+                el.style.setProperty("box-shadow", "none", "important");
+                el.style.setProperty("height", "36px", "important");
+                el.style.setProperty("font-size", "14px", "important");
+                el.style.setProperty("border-radius", "4px", "important");
+                el.style.setProperty("background-color", "#fff", "important");
+                el.classList.remove("in-valid");
+            });
+            root.querySelectorAll(".select2-selection--single, .select2-selection--multiple").forEach(function (el) {
+                el.style.setProperty("border", "1px solid #cfcfcf", "important");
+                el.style.setProperty("outline", "none", "important");
+                el.style.setProperty("box-shadow", "none", "important");
+                el.style.setProperty("height", "36px", "important");
+                el.style.setProperty("border-radius", "4px", "important");
+                el.style.setProperty("background-color", "#fff", "important");
+            });
+
+            // intl-tel-input: pad input by actual flag/+91 width so text never overlaps
+            root.querySelectorAll(".iti").forEach(function (iti) {
+                var flag = iti.querySelector(".iti__selected-flag") || iti.querySelector(".iti__flag-container");
+                var phone = iti.querySelector("input[type='tel'], input[type='text']");
+                if (!phone) return;
+                var pad = 110;
+                if (flag) {
+                    var w = Math.ceil(flag.getBoundingClientRect().width || flag.offsetWidth || 0);
+                    if (w > 40) pad = w + 14;
+                }
+                phone.style.setProperty("padding-left", pad + "px", "important");
+                phone.style.setProperty("padding-top", "0", "important");
+                phone.style.setProperty("padding-bottom", "0", "important");
+                phone.style.setProperty("line-height", "36px", "important");
+                phone.style.setProperty("height", "36px", "important");
+                phone.style.setProperty("font-size", "14px", "important");
+                phone.style.setProperty("width", "100%", "important");
+            });
+        }
+
+        // When Thank You modal opens, keep it on top and close enquiry popup behind it
+        function watchThankYouModal() {
+            if (window.__eeThankYouWatcher) return;
+            window.__eeThankYouWatcher = true;
+            var observer = new MutationObserver(function () {
+                var thankYou = document.querySelector(".jquery-modal.blocker, .jquery-modal.current, .blocker.current");
+                if (thankYou && thankYou.offsetParent !== null) {
+                    thankYou.style.setProperty("z-index", "10060", "important");
+                    var popup = document.getElementById("popupForm");
+                    if (popup && !popup.classList.contains("hidden")) {
+                        popup.classList.add("hidden");
+                    }
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"] });
+        }
+
+        var t = document.createElement("script");
+        t.type = "text/javascript";
+        t.onload = async function () {
+            _eeFormWidget = new eeFormWidget;
+            await _eeFormWidget.init("superhouseeducation", "form-20", "ee-form-20");
+            styleEeEnquiryForm();
+            setTimeout(styleEeEnquiryForm, 300);
+            setTimeout(styleEeEnquiryForm, 1000);
+            watchThankYouModal();
+            eeFormInited = true;
+            eeFormLoading = false;
+        };
+        t.onerror = function () {
+            eeFormLoading = false;
+        };
+        t.src = window.ee_form_widget_baseurl + "js/eeFormWidget.min.js";
+        document.getElementsByTagName("head")[0].appendChild(t);
+    };
+
+    // Also watch thank-you modal for page forms (process / online-enquiry)
+    document.addEventListener("DOMContentLoaded", function () {
+        if (window.__eeThankYouWatcher) return;
+        window.__eeThankYouWatcher = true;
+        var observer = new MutationObserver(function () {
+            var thankYou = document.querySelector(".jquery-modal.blocker, .jquery-modal.current, .blocker.current");
+            if (thankYou) {
+                thankYou.style.setProperty("z-index", "10060", "important");
+                var popup = document.getElementById("popupForm");
+                if (popup && !popup.classList.contains("hidden")) {
+                    popup.classList.add("hidden");
+                }
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"] });
+    });
+})();
+</script>
 
 <div class="bg-blue-main p-2 px-10 lg:flex hidden justify-between items-center text-[12px]">
 
@@ -538,6 +882,9 @@ function renderMenu($items, $isSub = false)
 <script>
     function openPopup() {
         document.getElementById("popupForm").classList.remove("hidden");
+        if (typeof window.initEeEnquiryForm === "function") {
+            window.initEeEnquiryForm();
+        }
     }
 
     function closePopup() {

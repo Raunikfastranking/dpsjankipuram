@@ -78,99 +78,9 @@ $totalTabs    = max($totalSteps, 6); // tab buttons ke liye minimum 6
                     <?php if ($i === 1): // Step 2 ke liye form ?>
                         <div class="mt-10 bg-gray-50 p-6 rounded-xl border border-gray-200">
                             <h2 class="text-center text-2xl font-bold text-blue-main mb-6">Enquiry Form | Session 2027–2028</h2>
-                            <div id="AdmissionFormPopup" class="hidden bg-green-500 text-white p-3 rounded mb-4 text-center">Form submitted successfully!</div>
-
-                            <form id="AdmissionForm" class="space-y-4">
-                                <div>
-                                    <select id="asession" required class="border p-3 rounded-md w-full">
-                                        <option value="" disabled selected>Enquiry For Session</option>
-                                        <?php
-                                        $sessions = include "includes/session-api.php";
-                                        foreach (array_unique(array_column($sessions, 'session')) as $sess): ?>
-                                            <option value="<?= htmlspecialchars($sess) ?>"><?= htmlspecialchars($sess) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div>
-                                    <select id="agrade" required class="w-full border p-3 rounded-md">
-                                        <option value="" disabled selected>Select Grade</option>
-                                        <?php
-                                            if (!empty($grades)) {
-                                            $gradeOrder = [
-                                                'P.G', 'Nursery', 'Prep',
-                                                'I', 'II', 'III', 'IV', 'V',
-                                                'VI', 'VII', 'VIII', 'IX',
-                                                'X', 'XI', 'XII'
-                                            ];
-
-                                            $uniqueGrades = [];
-                                            foreach ($grades as $g) {
-                                                $grade = trim($g['grades']);
-                                                if ($grade && !in_array($grade, $uniqueGrades)) {
-                                                    $uniqueGrades[] = $grade;
-                                                }
-                                            }
-
-                                            usort($uniqueGrades, function ($a, $b) use ($gradeOrder) {
-                                                $posA = array_search($a, $gradeOrder);
-                                                $posB = array_search($b, $gradeOrder);
-                                                $posA = ($posA === false) ? 999 : $posA;
-                                                $posB = ($posB === false) ? 999 : $posB;
-                                                return $posA - $posB;
-                                            });
-
-                                            foreach ($uniqueGrades as $gr):
-                                        ?>
-                                            <option value="<?= htmlspecialchars($gr, ENT_QUOTES, 'UTF-8') ?>">
-                                                <?= htmlspecialchars($gr, ENT_QUOTES, 'UTF-8') ?>
-                                            </option>
-                                        <?php endforeach; } else { ?>
-                                            <option value="">No grades available</option>
-                                        <?php } ?>
-                                    </select>
-                                </div>
-                                <div>
-                                    <input type="text" id="astudent_name" placeholder="Student Name" class="w-full border p-3 rounded-md" required>
-                                </div>
-                                <div>
-                                    <input type="text" id="aparent_name" placeholder="Parents Name" class="w-full border p-3 rounded-md">
-                                </div>
-                                <div>
-                                    <input type="text" id="amobile" placeholder="Mobile Number" maxlength="10" class="border p-3 rounded-md w-full" required>
-                                </div>
-                                <div>
-                                    <input type="email" id="aemail" placeholder="Email Address" class="border p-3 rounded-md w-full">
-                                </div>
-
-                                <div class="relative" id="cityWrapper">
-                                    <select id="acity" name="city" class="hidden" required>
-                                        <option value="">Select City</option>
-                                        <?php
-                                        $cities = include 'includes/get-city.php';
-                                        foreach ($cities as $ct): if(empty($ct['name'])) continue; ?>
-                                            <option value="<?= htmlspecialchars($ct['name']) ?>"><?= htmlspecialchars($ct['name']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <div id="cityTrigger" class="border p-3 rounded-md bg-white cursor-pointer flex justify-between items-center">
-                                        <span class="selected-text text-gray-400">Select City</span>
-                                        <span>▼</span>
-                                    </div>
-                                    <div id="cityDropdown" class="absolute w-full mt-1 border bg-white shadow-lg z-50 hidden rounded-md">
-                                        <input type="text" id="citySearch" placeholder="Search city..." class="w-full p-2 border-b outline-none">
-                                        <ul id="cityList" class="max-h-40 overflow-y-auto"></ul>
-                                    </div>
-                                </div>
-
-                                <input type="text" id="apincode" placeholder="Pincode" maxlength="6" class="w-full border p-3 rounded-md" required>
-
-                                <div class="flex items-center gap-2">
-                                    <input type="checkbox" id="terms" required>
-                                    <label for="terms" class="text-sm">I agree to Terms & Conditions</label>
-                                </div>
-
-                                <input type="hidden" id="source" name="source">
-                                <button type="submit" id="AsubmitBtn" class="w-full bg-blue-main text-white p-4 rounded-md font-bold hover:bg-red-600 transition-colors">Submit</button>
-                            </form>
+                            <div class="ee-process-form-wrap mx-auto">
+                                <div id="ee-form-process"></div>
+                            </div>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -193,243 +103,270 @@ $totalTabs    = max($totalSteps, 6); // tab buttons ke liye minimum 6
                 button.classList.add("active");
                 const tab = button.getAttribute("data-tab");
                 document.querySelector(`[data-tab-content="${tab}"]`).classList.remove("hidden");
+                if (tab === "step-2" && typeof window.initPageEeForm === "function") {
+                    window.initPageEeForm("ee-form-process");
+                }
             });
         });
     </script>
 
+    <style>
+    /* Process page enquiry form — match reference width/height/layout */
+    .ee-process-form-wrap {
+        width: 100%;
+        max-width: 100%;
+    }
+    #ee-form-process {
+        --ee-primary-color: #005224;
+        --ee-border-color: #cfcfcf;
+        width: 100%;
+    }
+    #ee-form-process .ee-form-widget,
+    #ee-form-process .ee-form-widget .ee-container,
+    #ee-form-process .ee-form-widget-form,
+    #ee-form-process .ee-form-widget .modal-content,
+    #ee-form-process .ee-form-widget .modal-body {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        width: 100% !important;
+    }
+    #ee-form-process .modal-header,
+    #ee-form-process .ee-form-heading {
+        display: none !important;
+    }
+    /* Keep ExtraaEdge 2-column for State/City like reference */
+    #ee-form-process .ee-form-body.TWO_COLUMNS {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        gap: 0 12px !important;
+    }
+    #ee-form-process .ee-form-body > .ee-row,
+    #ee-form-process .ee-form-body.TWO_COLUMNS > .ee-row {
+        margin: 0 0 16px !important;
+    }
+    #ee-form-process .ee-form-body.TWO_COLUMNS > .ee-row:not(.full-width) {
+        width: calc(50% - 6px) !important;
+        margin: 0 0 16px !important;
+        float: none !important;
+    }
+    #ee-form-process .ee-form-body.TWO_COLUMNS > .ee-row.full-width,
+    #ee-form-process .ee-form-body > .ee-row.full-width {
+        width: 100% !important;
+        margin: 0 0 16px !important;
+    }
+    #ee-form-process .ee-form-widget .ee-row > label:not(:has(input[type="checkbox"])) {
+        display: none !important;
+    }
+    #ee-form-process .ee-form-widget input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="search"]):not([type="tel"]),
+    #ee-form-process .ee-form-widget select,
+    #ee-form-process .ee-form-widget textarea,
+    #ee-form-process .ee-form-widget .select2-container .select2-selection--single {
+        width: 100% !important;
+        height: 40px !important;
+        min-height: 40px !important;
+        box-sizing: border-box !important;
+        padding: 8px 12px !important;
+        border: 1px solid #cfcfcf !important;
+        border-radius: 4px !important;
+        background: #fff !important;
+        font-size: 14px !important;
+        color: #333 !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+    #ee-form-process .ee-form-widget input::placeholder {
+        font-size: 14px !important;
+        color: #808080 !important;
+    }
+    #ee-form-process .ee-form-widget .select2-container {
+        width: 100% !important;
+    }
+    #ee-form-process .ee-form-widget .select2-container .select2-selection--single {
+        display: flex !important;
+        align-items: center !important;
+    }
+    #ee-form-process .ee-form-widget .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #808080 !important;
+        font-size: 14px !important;
+        line-height: 22px !important;
+        padding: 0 !important;
+    }
+    #ee-form-process .ee-form-widget .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px !important;
+        top: 1px !important;
+        right: 6px !important;
+    }
+    /* Mobile: flag/+91 left, no overlap */
+    #ee-form-process .ee-form-widget .iti {
+        width: 100% !important;
+        display: block !important;
+        position: relative !important;
+    }
+    #ee-form-process .ee-form-widget .iti input[type="tel"],
+    #ee-form-process .ee-form-widget .iti input[type="text"] {
+        width: 100% !important;
+        height: 40px !important;
+        padding: 0 12px 0 110px !important;
+        line-height: 40px !important;
+        border: 1px solid #cfcfcf !important;
+        border-radius: 4px !important;
+        font-size: 14px !important;
+        box-sizing: border-box !important;
+    }
+    #ee-form-process .ee-form-widget .iti__flag-container {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        right: auto !important;
+    }
+    #ee-form-process .ee-form-widget .iti--separate-dial-code .iti__selected-flag,
+    #ee-form-process .ee-form-widget .iti--allow-dropdown .iti__selected-flag {
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        padding: 0 10px 0 8px !important;
+        background: #f0f0f0 !important;
+        border-radius: 3px 0 0 3px !important;
+        gap: 4px !important;
+    }
+    #ee-form-process .ee-form-widget .iti__selected-dial-code {
+        font-size: 14px !important;
+        color: #333 !important;
+    }
+    /* Consent + submit */
+    #ee-form-process .ee-form-widget .ee-row label:has(input[type="checkbox"]) {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+        color: #666 !important;
+        font-weight: 400 !important;
+    }
+    #ee-form-process .ee-form-footer,
+    #ee-form-process .btnContainer {
+        display: block !important;
+        width: 100% !important;
+        margin-top: 12px !important;
+    }
+    #ee-form-process .btn.btn-submit,
+    #ee-form-process button.btn-submit {
+        width: 100% !important;
+        height: 44px !important;
+        background: #005224 !important;
+        border: 1px solid #005224 !important;
+        color: #fff !important;
+        border-radius: 9999px !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+    }
+    #ee-form-process .btn.btn-submit:hover {
+        background: #003618 !important;
+        border-color: #003618 !important;
+    }
+    @media (max-width: 600px) {
+        .ee-process-form-wrap { max-width: 100%; }
+        #ee-form-process .ee-form-body.TWO_COLUMNS > .ee-row:not(.full-width) {
+            width: 100% !important;
+        }
+    }
+    </style>
+
     <script>
-        // Source detection
-        (function() {
-            function getParam(name) {
-                const urlParams = new URLSearchParams(window.location.search);
-                return urlParams.get(name);
+    (function () {
+        window.ee_form_widget_baseurl = window.ee_form_widget_baseurl || "https://eeconfigstaticfiles.blob.core.windows.net/staticfiles/ee-form-widget/";
+        var pageEeInited = {};
+        var pageEeLoading = {};
+
+        function styleProcessEeForm(root) {
+            if (!root) return;
+            root.style.setProperty("--ee-primary-color", "#005224");
+            root.querySelectorAll(".btn-submit, button[type='submit']").forEach(function (btn) {
+                btn.style.setProperty("background-color", "#005224", "important");
+                btn.style.setProperty("border-color", "#005224", "important");
+                btn.style.setProperty("color", "#fff", "important");
+                btn.style.setProperty("width", "100%", "important");
+                btn.style.setProperty("border-radius", "9999px", "important");
+            });
+            root.querySelectorAll(".iti").forEach(function (iti) {
+                var flag = iti.querySelector(".iti__selected-flag") || iti.querySelector(".iti__flag-container");
+                var phone = iti.querySelector("input[type='tel'], input[type='text']");
+                if (!phone) return;
+                var pad = 110;
+                if (flag) {
+                    var w = Math.ceil(flag.getBoundingClientRect().width || flag.offsetWidth || 0);
+                    if (w > 40) pad = w + 14;
+                }
+                phone.style.setProperty("padding-left", pad + "px", "important");
+                phone.style.setProperty("line-height", "40px", "important");
+                phone.style.setProperty("height", "40px", "important");
+            });
+        }
+
+        window.initPageEeForm = function (targetId) {
+            if (!targetId || !document.getElementById(targetId)) return;
+            if (pageEeInited[targetId] || pageEeLoading[targetId]) return;
+            pageEeLoading[targetId] = true;
+
+            function runInit() {
+                return (async function () {
+                    _eeFormWidget = new eeFormWidget;
+                    await _eeFormWidget.init("superhouseeducation", "form-20", targetId);
+                    var root = document.getElementById(targetId);
+                    styleProcessEeForm(root);
+                    setTimeout(function () { styleProcessEeForm(root); }, 300);
+                    setTimeout(function () { styleProcessEeForm(root); }, 1000);
+                    pageEeInited[targetId] = true;
+                    pageEeLoading[targetId] = false;
+                })().catch(function () {
+                    pageEeLoading[targetId] = false;
+                });
             }
 
-            let source = getParam("utm_source") || document.referrer || "";
-            console.log("Initial Source:", source);
-
-            const src = source.toLowerCase();
-
-            if (!source) {
-                source = "Website";
-            } else if (src.includes("google")) {
-                source = "Google-Ads by Agency";
-            } else if (src.includes("facebook") || src.includes("meta")) {
-                source = "Facebook by Agency";
-            } else if (src.includes("instagram") || src.includes("ig")) {
-                source = "Instagram by Agency";
-            } else {
-                source = "Others";
+            if (!document.getElementById("__formWidgetCss")) {
+                var e = document.createElement("link");
+                e.id = "__formWidgetCss";
+                e.rel = "stylesheet";
+                e.href = window.ee_form_widget_baseurl + "css/stylesheet.min.css";
+                e.type = "text/css";
+                document.getElementsByTagName("head")[0].appendChild(e);
             }
 
-            if (!sessionStorage.getItem("leadSource")) {
-                sessionStorage.setItem("leadSource", source);
-            }
-
-            const finalSource = sessionStorage.getItem("leadSource");
-            const sourceInput = document.getElementById("source");
-
-            if (sourceInput) {
-                sourceInput.value = finalSource;
-            }
-
-            console.log("Captured Source:", finalSource);
-        })();
-
-        // Validation regex patterns
-        const nameRegex = /^[A-Za-z\s]+$/;
-        const mobileRegex = /^[6-9]\d{9}$/;
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const pincodeRegex = /^[1-9][0-9]{5}$/;
-
-        const studentError = document.getElementById("astudent-error");
-        const parentError = document.getElementById("aparent-error");
-        const mobileError = document.getElementById("amobile-error");
-        const emailError = document.getElementById("aemail-error");
-        const pincodeError = document.getElementById("apincode-error");
-
-        document.getElementById("astudent_name").addEventListener("input", function() {
-            if (studentError) studentError.classList.toggle("hidden", !this.value || nameRegex.test(this.value));
-        });
-
-        document.getElementById("aparent_name").addEventListener("input", function() {
-            if (parentError) parentError.classList.toggle("hidden", !this.value || nameRegex.test(this.value));
-        });
-
-        document.getElementById("amobile").addEventListener("input", function() {
-            this.value = this.value.replace(/\D/g, '').slice(0, 10);
-            if (mobileError) mobileError.classList.toggle("hidden", !this.value || mobileRegex.test(this.value));
-        });
-
-        document.getElementById("aemail").addEventListener("input", function() {
-            this.value = this.value.toLowerCase();
-            if (emailError) emailError.classList.toggle("hidden", !this.value || emailRegex.test(this.value));
-        });
-
-        document.getElementById("apincode").addEventListener("input", function() {
-            this.value = this.value.replace(/\D/g, '').slice(0, 6);
-            if (pincodeError) pincodeError.classList.toggle("hidden", !this.value || pincodeRegex.test(this.value));
-        });
-
-        // Form submission
-        document.getElementById("AdmissionForm").addEventListener("submit", function(e) {
-            e.preventDefault();
-            const AsubmitBtn = document.getElementById("AsubmitBtn");
-            AsubmitBtn.disabled = true;
-            AsubmitBtn.textContent = "Submitting...";
-
-            const agrade = document.getElementById("agrade").value.trim();
-            const astudent_name = document.getElementById("astudent_name").value.trim();
-            const aparent_name = document.getElementById("aparent_name").value.trim();
-            const amobile = document.getElementById("amobile").value.trim();
-            const aemail = document.getElementById("aemail").value.trim();
-            const acity = document.getElementById("acity").value.trim();
-            const apincode = document.getElementById("apincode").value.trim();
-            const source = sessionStorage.getItem("leadSource") || "Website";
-            const asession = document.getElementById("asession").value.trim();
-
-            let isValid = true;
-
-            if (!nameRegex.test(astudent_name)) {
-                if (studentError) { studentError.textContent = "Only letters and spaces allowed."; studentError.classList.remove("hidden"); }
-                isValid = false;
-            }
-
-            if (aparent_name && !nameRegex.test(aparent_name)) {
-                if (parentError) { parentError.textContent = "Only letters and spaces allowed."; parentError.classList.remove("hidden"); }
-                isValid = false;
-            }
-
-            if (!mobileRegex.test(amobile)) {
-                if (mobileError) mobileError.classList.remove("hidden");
-                isValid = false;
-            }
-
-            if (aemail && !emailRegex.test(aemail)) {
-                if (emailError) emailError.classList.remove("hidden");
-                isValid = false;
-            }
-
-            if (!pincodeRegex.test(apincode)) {
-                if (pincodeError) pincodeError.classList.remove("hidden");
-                isValid = false;
-            }
-
-            if (!acity) {
-                alert("Please select a city.");
-                isValid = false;
-            }
-
-            if (!isValid) {
-                AsubmitBtn.disabled = false;
-                AsubmitBtn.textContent = "Submit";
+            if (typeof eeFormWidget !== "undefined") {
+                runInit();
                 return;
             }
 
-            const payload = {
-                session: asession,
-                grade: agrade,
-                name: astudent_name,
-                parent_name: aparent_name,
-                phone: amobile,
-                email: aemail,
-                city: acity,
-                pincode: apincode,
-                source: source,
-                source_type: "Website",
-                enquiry_type: "Digital",
-                message: "This Message From DPS Jankipuram Website",
-                subject: "Admission Enquiry",
-                branch_id: 10,
-                school_id: 1,
-                language_id: 1
-            };
-
-            fetch(`proxy/admission-proxy`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error("Error: " + response.statusText);
-                    return response.json();
-                })
-                .then(data => {
-                    document.getElementById("AdmissionFormPopup").classList.remove("hidden");
-                    setTimeout(() => {
-                        document.getElementById("AdmissionFormPopup").classList.add("hidden");
-                    }, 3000);
-                    document.getElementById("AdmissionForm").reset();
-                    document.querySelector('#cityTrigger .selected-text').textContent = 'Select City';
-                    document.querySelector('#cityTrigger .selected-text').classList.add('text-gray-400');
-                })
-                .catch(error => {
-                    alert("There was an error submitting the form.");
-                    console.error("Error:", error);
-                })
-                .finally(() => {
-                    AsubmitBtn.disabled = false;
-                    AsubmitBtn.textContent = "Submit";
-                });
-        });
-    </script>
-
-    <script>
-        // City dropdown functionality
-        document.addEventListener("DOMContentLoaded", function () {
-            const wrapper = document.getElementById('cityWrapper');
-            const trigger = document.getElementById('cityTrigger');
-            const dropdown = document.getElementById('cityDropdown');
-            const search = document.getElementById('citySearch');
-            const list = document.getElementById('cityList');
-            const hiddenSelect = document.getElementById('acity');
-            const displaySpan = trigger.querySelector('.selected-text');
-
-            function populateList(filter = '') {
-                list.innerHTML = '';
-                const options = Array.from(hiddenSelect.options);
-                options.forEach(opt => {
-                    if (opt.value && opt.text.toLowerCase().includes(filter.toLowerCase())) {
-                        const li = document.createElement('li');
-                        li.textContent = opt.text;
-                        li.dataset.value = opt.value;
-                        li.className = 'p-2 hover:bg-gray-100 cursor-pointer';
-                        list.appendChild(li);
-                    }
-                });
+            var existing = document.querySelector('script[src*="eeFormWidget.min.js"]');
+            if (existing) {
+                existing.addEventListener("load", runInit);
+                if (typeof eeFormWidget !== "undefined") runInit();
+                return;
             }
 
-            trigger.addEventListener('click', function (e) {
-                e.stopPropagation();
-                dropdown.classList.toggle('hidden');
-                if (!dropdown.classList.contains('hidden')) {
-                    search.value = '';
-                    populateList();
-                    search.focus();
-                }
-            });
+            var t = document.createElement("script");
+            t.type = "text/javascript";
+            t.onload = runInit;
+            t.onerror = function () { pageEeLoading[targetId] = false; };
+            t.src = window.ee_form_widget_baseurl + "js/eeFormWidget.min.js";
+            document.getElementsByTagName("head")[0].appendChild(t);
+        };
 
-            search.addEventListener('input', function () {
-                populateList(search.value);
-            });
-
-            list.addEventListener('click', function (e) {
-                if (e.target.tagName === 'LI') {
-                    const value = e.target.dataset.value;
-                    const text = e.target.textContent;
-                    hiddenSelect.value = value;
-                    displaySpan.textContent = text;
-                    displaySpan.classList.remove('text-gray-400');
-                    dropdown.classList.add('hidden');
+        document.addEventListener("DOMContentLoaded", function () {
+            if (document.getElementById("ee-form-process")) {
+                var step2 = document.querySelector('[data-tab-content="step-2"]');
+                if (step2 && !step2.classList.contains("hidden")) {
+                    window.initPageEeForm("ee-form-process");
                 }
-            });
-
-            document.addEventListener('click', function (e) {
-                if (!wrapper.contains(e.target)) {
-                    dropdown.classList.add('hidden');
-                }
-            });
+            }
         });
+    })();
     </script>
 
     <?php include "includes/foot.php" ?>
