@@ -16,17 +16,20 @@ if ($uri !== '/' && is_file($requested)) {
 
 $path = rtrim($uri, '/');
 if ($path === '' || $path === '/') {
-    return $docRoot . DIRECTORY_SEPARATOR . 'index.php';
+    require $docRoot . DIRECTORY_SEPARATOR . 'index.php';
+    return true;
 }
 
 $candidate = $docRoot . $path . '.php';
 if (is_file($candidate)) {
-    return $candidate;
+    require $candidate;
+    return true;
 }
 
 http_response_code(404);
 if (is_file($docRoot . DIRECTORY_SEPARATOR . '404.php')) {
-    return $docRoot . DIRECTORY_SEPARATOR . '404.php';
+    require $docRoot . DIRECTORY_SEPARATOR . '404.php';
+    return true;
 }
 header('Content-Type: text/plain; charset=utf-8');
 echo '404 Not Found: ' . $uri . PHP_EOL;

@@ -10,19 +10,47 @@ if (!defined('DPS_JANKIPURAM_GALLERY_BRANCH_ID')) {
 function fetchMultipleApiData($endpoints)
 {
     $baseUrl = "https://dps.allenhouseschools.com/api";
+    $cacheDir = __DIR__ . '/cache/api';
+    $cacheTtl = defined('DPS_API_CACHE_TTL') ? DPS_API_CACHE_TTL : 3600;
+    $responses = [];
+    $pending = [];
+
+    // Serve fresh cache hits; queue the rest for fetching
+    foreach ($endpoints as $key => $endpoint) {
+        $cacheFile = $cacheDir . '/' . md5($endpoint) . '.json';
+        if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTtl) {
+            $cached = json_decode(file_get_contents($cacheFile), true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $responses[$key] = $cached;
+                continue;
+            }
+        }
+        $pending[$key] = $endpoint;
+    }
+
+    if (empty($pending)) {
+        return $responses;
+    }
+
+    // Deduplicate identical endpoints; create one curl handle per unique endpoint
+    $endpointKeys = [];
+    foreach ($pending as $key => $endpoint) {
+        $endpointKeys[$endpoint][] = $key;
+    }
+
     $mh = curl_multi_init();
     $curlHandles = [];
-    $responses = [];
-    // Create all curl handles
-    foreach ($endpoints as $key => $endpoint) {
+    foreach ($endpointKeys as $endpoint => $keys) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $baseUrl . $endpoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // disable SSL check if needed
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
         curl_setopt($ch, CURLOPT_HTTPHEADER, api_auth_headers());
         curl_multi_add_handle($mh, $ch);
-        $curlHandles[$key] = $ch;
+        $curlHandles[$endpoint] = $ch;
     }
     $running = null;
     do {
@@ -35,10 +63,30 @@ function fetchMultipleApiData($endpoints)
         usleep(10000);
     } while ($running > 0);
 
-    // Collect responses
-    foreach ($curlHandles as $key => $ch) {
+    if (!is_dir($cacheDir)) {
+        @mkdir($cacheDir, 0755, true);
+    }
+
+    // Collect responses, write cache, fall back to stale cache on failure
+    foreach ($curlHandles as $endpoint => $ch) {
         $content = curl_multi_getcontent($ch);
-        $responses[$key] = json_decode($content, true);
+        $decoded = json_decode($content, true);
+        $cacheFile = $cacheDir . '/' . md5($endpoint) . '.json';
+
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $value = $decoded;
+            @file_put_contents($cacheFile . '.tmp', $content, LOCK_EX);
+            @rename($cacheFile . '.tmp', $cacheFile);
+        } elseif (is_file($cacheFile)) {
+            $stale = json_decode(file_get_contents($cacheFile), true);
+            $value = (json_last_error() === JSON_ERROR_NONE) ? $stale : null;
+        } else {
+            $value = null;
+        }
+
+        foreach ($endpointKeys[$endpoint] as $key) {
+            $responses[$key] = $value;
+        }
         curl_multi_remove_handle($mh, $ch);
         curl_close($ch);
     }
