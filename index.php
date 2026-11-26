@@ -1820,7 +1820,7 @@ $showPopup = !empty(trim($image)); // show popup only if image exists
                                 <li class="tab-link" data-tab="tab-2">Video Testimonials</li>
                             </ul> -->
 
-                            <div id="tab-1" class="tab-content current Testimonials">
+                            <div id="tab-1" class="tab-content current Testimonials relative opne-hide-circle">
                                 <div class=" overflow-hidden mt-1" data-glide-el="track">
                                     <ul class="glide__slides">
                                         <?php
@@ -1888,6 +1888,20 @@ $showPopup = !empty(trim($image)); // show popup only if image exists
                                         </li> -->
 
                                     </ul>
+                                </div>
+                                <!-- Controls -->
+                                <div class="absolute left-0 xl:flex hidden items-center justify-between w-full h-0 px-4 top-1/2 hide-circle"
+                                    data-glide-el="controls">
+                                    <button
+                                        class="inline-flex items-center justify-center relative right-[66px] hover:bg-[#FED72B] w-8 h-8 transition duration-300 border rounded-full lg:w-10 lg:h-10 text-slate-700 hover:text-slate-900 focus-visible:outline-none bg-white/20"
+                                        data-glide-dir="<" aria-label="prev slide">
+                                        <i class="fa-solid fa-angle-left text-[#005224]"></i>
+                                    </button>
+                                    <button
+                                        class="inline-flex items-center justify-center relative left-[66px] hover:bg-[#FED72B] w-8 h-8 transition duration-300 border rounded-full lg:w-10 lg:h-10 text-slate-700 hover:text-slate-900 focus-visible:outline-none bg-white/20"
+                                        data-glide-dir=">" aria-label="next slide">
+                                        <i class="fa-solid fa-angle-right text-[#005224]"></i>
+                                    </button>
                                 </div>
                             </div>
 
