@@ -7,7 +7,7 @@ $branchId = DPS_JANKIPURAM_BRANCH_ID;
 
 // --- Simple Caching ---
 $cacheFile = __DIR__ . '/cache/grades_cache.json'; // Store in a 'cache' subdirectory
-$cacheTime = 3600; // Cache for 1 hour (3600 seconds)
+$cacheTime = defined('DPS_API_CACHE_TTL') ? DPS_API_CACHE_TTL : 60; // Cache duration in seconds (1-2 min)
 
 // Check if cache exists and is fresh
 if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime) {

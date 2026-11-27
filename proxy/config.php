@@ -3,7 +3,7 @@
 define('API_BASE_URL', 'https://allenp.superhouseerp.com');
 define('DPS_JANKIPURAM_BRANCH_ID', 10);
 define('API_JWT_TOKEN', 'hgutuyg758374tg5f3738y87gusdfjhgjh$@.hgjgjhikj');
-define('DPS_API_CACHE_TTL', 3600); // seconds — CMS API response cache lifetime
+define('DPS_API_CACHE_TTL', 60); // seconds — CMS API response cache lifetime (reflects within 1-2 min)
 define('DPS_CACHE_CLEAR_KEY', '6772c53526ba54c47e6594bd0584c123'); // required key for clear-cache.php
 
 if (!function_exists('api_auth_headers')) {
