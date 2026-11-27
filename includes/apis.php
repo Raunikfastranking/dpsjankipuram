@@ -7,22 +7,169 @@ if (!defined('DPS_JANKIPURAM_GALLERY_BRANCH_ID')) {
     define('DPS_JANKIPURAM_GALLERY_BRANCH_ID', DPS_JANKIPURAM_BRANCH_ID);
 }
 
+function dps_get_current_page_endpoint_keys(array $endpoints): array
+{
+    // Layout endpoints needed on every single page
+    $priority = [
+        'header_footer_data',
+        'menu_data',
+        'scroll_text_data',
+        'flyer_data',
+        'footer_link_data',
+    ];
+
+    // Detect current script name
+    $script = '';
+    if (!empty($_SERVER['SCRIPT_FILENAME'])) {
+        $script = strtolower(basename($_SERVER['SCRIPT_FILENAME'], '.php'));
+    }
+    if ($script === '' || $script === 'index') {
+        $uriPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
+        $cleanPath = trim(strtolower($uriPath), '/');
+        $cleanPath = preg_replace('/\.php$/i', '', $cleanPath);
+        if ($cleanPath !== '') {
+            $parts = explode('/', $cleanPath);
+            $script = end($parts);
+        }
+    }
+
+    if ($script === '' || $script === 'index') {
+        $priority[] = 'home_data';
+        $priority[] = 'statistic_data';
+        $priority[] = 'photo_gallery_data';
+        return array_values(array_unique($priority));
+    }
+
+    $aliasMap = [
+        'testimonial' => ['testimonial_data', 'home_data'],
+        'testimonials' => ['testimonial_data', 'home_data'],
+        'video-gallery' => ['video_data'],
+        'videos' => ['video_data'],
+        'photo-gallery' => ['photo_gallery_data', 'photo_data'],
+        'gallery' => ['photo_gallery_data', 'photo_data'],
+        'contact' => ['contact_data'],
+        'contact-us' => ['contact_data'],
+        'news' => ['dps_data', 'magazine_data'],
+        'magazine' => ['magazine_data'],
+        'faq' => ['faqs_data'],
+        'faqs' => ['faqs_data'],
+        'mission' => ['mv_data'],
+        'our-story' => ['ourstory_data'],
+        'process' => ['process_data', 'process_____data', 'x_____data', 'xii_____data'],
+        'bus-routes' => ['bus_routes_data', 'route_data', 'busroute_data'],
+        'sports' => ['sports_data', 'northwest_data'],
+        'facilities' => ['facilities_data', 'otherfacilitie_data', 'smartclassrooms_data', 'laboratories_data'],
+        'fee-structure' => ['feestructure_data'],
+        'about-the-clan' => ['abouttheclan_data'],
+        'chairman-message' => ['chairmans_data'],
+        'principal-message' => ['principal_data'],
+        'leadership-team' => ['leadershipteam_data'],
+        'management-committee' => ['mc_data'],
+        'teachers-details' => ['teacherdetails_data', 'staffteaching_data'],
+        'cbse-page' => ['cbsepage_data', 'cbseinformation_data'],
+        'cbse-information' => ['cbseinformation_data', 'cbsepage_data'],
+        'superhouse-education' => ['superhouse_data'],
+        'termsandconditions' => ['terms_and_conditions'],
+        'blog' => ['blogData'],
+        'academic-achievement' => ['academicachievement_data'],
+        'non-academic' => ['nonacademicachievement_data'],
+        'school-awards' => ['schoolawards_data'],
+        'principal-awards' => ['principalawards_data'],
+        'parent-teacher-association' => ['parentteacher_data'],
+        'sexual-harassment-committee' => ['sexualharassment_data'],
+        'disaster-management-committee' => ['disastermanagement_data'],
+        'safe-and-healthy-food-committee' => ['safehealthy_data'],
+        'safety-and-security' => ['safesecurity_data'],
+        'pocso' => ['pocso_data'],
+        'admission-overview' => ['admissionoverview_data'],
+        'withdrawal-policy' => ['withdrawalpolicy_data'],
+        'group-transfer-policy' => ['grouptransfer_data'],
+        'smart-classrooms' => ['smartclassrooms_data'],
+        'laboratories' => ['laboratories_data'],
+        'other-facilities' => ['otherfacilitie_data'],
+        'our-curriculum' => ['ourcurriculum_data'],
+        'coding' => ['coding_data'],
+        'animation' => ['animation_datas'],
+        'financial-literacy' => ['financial_data'],
+        'school-clubs' => ['schoolclub_data'],
+        'health-and-wellbeing' => ['health_data'],
+        'mental-health-wellness' => ['mentalhealth_data'],
+        'student-led-programme' => ['studentled_data'],
+        'career-guidence-program' => ['careerguidance_data'],
+        'senior-junior-library' => ['seniorjunior_data'],
+        'house-system' => ['house_data'],
+        'general-information' => ['generalinformation_data'],
+        'documents-and-information' => ['documentsinformation_data'],
+        'results-and-academics' => ['resultsandacademics_data'],
+        'staff-teaching' => ['staffteaching_data'],
+        'school-infrastructure' => ['schoolinfrastructure_data'],
+        'dpss-human-resource-department' => ['dpsshuman_data'],
+        'pedagogy' => ['pedagogy_data'],
+        'activities' => ['activities_data'],
+        'physical-health-fitness-development' => ['physicalhealth_data'],
+        'senior-wing-faculty' => ['seniorwing_data'],
+        'middle-wing-faculty' => ['middlewing_data'],
+        'primary-wing-faculty' => ['primarywing_data'],
+        'pre-primary-wing-faculty' => ['Preprimarywing_data'],
+        'job-openings' => ['jobs_data'],
+        'job-apply' => ['jobs_data'],
+        'excellence-in-action' => ['excellence_data'],
+        'celebrating-excellence' => ['celebrating_data'],
+        'excellence-in-spotlight' => ['spotlight_data'],
+        'embark-on-journey' => ['embark_data'],
+        'dps-society' => ['society_data'],
+        'dps-history' => ['history_data'],
+        'school-guidelines' => ['schoolguidelines_data'],
+        'debriefing-sessions' => ['debriefing_data'],
+        'awards-and-accolades' => ['awards_data'],
+    ];
+
+    if (isset($aliasMap[$script])) {
+        foreach ($aliasMap[$script] as $k) {
+            $priority[] = $k;
+        }
+    }
+
+    $scriptSlug = str_replace('_', '-', $script);
+    foreach ($endpoints as $k => $path) {
+        if (stripos($path, '/' . $scriptSlug . '-') !== false || stripos($path, '/' . $scriptSlug) !== false) {
+            $priority[] = $k;
+        }
+    }
+
+    return array_values(array_unique($priority));
+}
+
 function fetchMultipleApiData($endpoints)
 {
     $baseUrl = "https://dps.allenhouseschools.com/api";
     $cacheDir = __DIR__ . '/cache/api';
-    $cacheTtl = defined('DPS_API_CACHE_TTL') ? DPS_API_CACHE_TTL : 3600;
+    $cacheTtl = defined('DPS_API_CACHE_TTL') ? DPS_API_CACHE_TTL : 60; // 60s freshness (reflects within 1-2 min max)
+    $staleMaxAge = $cacheTtl * 2; // 120s max for background endpoints
     $responses = [];
     $pending = [];
+
+    $forceRefreshAll = !empty($_GET['clear_all']) || (isset($_GET['refresh']) && $_GET['refresh'] === 'all');
+    $forceRefreshPage = !empty($_GET['refresh']) || !empty($_GET['nocache']) || !empty($_GET['clear_cache']);
+
+    $priorityKeys = dps_get_current_page_endpoint_keys($endpoints);
+    $priorityMap = array_fill_keys($priorityKeys, true);
 
     // Serve fresh cache hits; queue the rest for fetching
     foreach ($endpoints as $key => $endpoint) {
         $cacheFile = $cacheDir . '/' . md5($endpoint) . '.json';
-        if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTtl) {
-            $cached = json_decode(file_get_contents($cacheFile), true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $responses[$key] = $cached;
-                continue;
+        $isPriority = isset($priorityMap[$key]);
+        $effectiveTtl = $isPriority ? $cacheTtl : $staleMaxAge;
+        $isForced = $forceRefreshAll || ($isPriority && $forceRefreshPage);
+
+        if (!$isForced && is_file($cacheFile)) {
+            $age = time() - (int)@filemtime($cacheFile);
+            if ($age < $effectiveTtl) {
+                $cached = json_decode(@file_get_contents($cacheFile), true);
+                if (json_last_error() === JSON_ERROR_NONE && !empty($cached)) {
+                    $responses[$key] = $cached;
+                    continue;
+                }
             }
         }
         $pending[$key] = $endpoint;
@@ -44,10 +191,10 @@ function fetchMultipleApiData($endpoints)
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $baseUrl . $endpoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // disable SSL check if needed
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 12);
         curl_setopt($ch, CURLOPT_HTTPHEADER, api_auth_headers());
         curl_multi_add_handle($mh, $ch);
         $curlHandles[$endpoint] = $ch;
@@ -55,7 +202,6 @@ function fetchMultipleApiData($endpoints)
     $running = null;
     do {
         $status = curl_multi_exec($mh, $running);
-
         if ($status > CURLM_OK) {
             break;
         }
@@ -73,13 +219,13 @@ function fetchMultipleApiData($endpoints)
         $decoded = json_decode($content, true);
         $cacheFile = $cacheDir . '/' . md5($endpoint) . '.json';
 
-        if (json_last_error() === JSON_ERROR_NONE) {
+        if (json_last_error() === JSON_ERROR_NONE && !empty($decoded)) {
             $value = $decoded;
             @file_put_contents($cacheFile . '.tmp', $content, LOCK_EX);
             @rename($cacheFile . '.tmp', $cacheFile);
         } elseif (is_file($cacheFile)) {
-            $stale = json_decode(file_get_contents($cacheFile), true);
-            $value = (json_last_error() === JSON_ERROR_NONE) ? $stale : null;
+            $stale = json_decode(@file_get_contents($cacheFile), true);
+            $value = (json_last_error() === JSON_ERROR_NONE && !empty($stale)) ? $stale : null;
         } else {
             $value = null;
         }

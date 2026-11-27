@@ -4,4 +4,6 @@ services:
     container_name: dpsjankipuram
     ports:
       - "7004:80"
+    volumes:
+      - .:/var/www/html
     restart: unless-stopped
