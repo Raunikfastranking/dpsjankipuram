@@ -1,6 +1,102 @@
 <?php
 include "includes/apis.php";
-   $videos = $testimonial_data['data']['sections'][2]['resolved_content']['media'] ?? [];
+
+function dps_get_youtube_embed_url(?string $videoUrl): string {
+    $videoUrl = trim((string)$videoUrl);
+    if ($videoUrl === '') return '';
+
+    // 1. YouTube playlist
+    if (preg_match('/[?&]list=([^&]+)/', $videoUrl, $m)) {
+        return 'https://www.youtube.com/embed/videoseries?list=' . $m[1];
+    }
+    // 2. youtu.be/<id>
+    if (preg_match('/youtu\.be\/([a-zA-Z0-9_-]+)/', $videoUrl, $m)) {
+        return 'https://www.youtube.com/embed/' . $m[1];
+    }
+    // 3. youtube.com/watch?v=<id>
+    if (preg_match('/[?&]v=([a-zA-Z0-9_-]+)/', $videoUrl, $m)) {
+        return 'https://www.youtube.com/embed/' . $m[1];
+    }
+    // 4. youtube.com/shorts/<id>
+    if (preg_match('/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/', $videoUrl, $m)) {
+        return 'https://www.youtube.com/embed/' . $m[1];
+    }
+    // 5. youtube.com/embed/<id>
+    if (preg_match('/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/', $videoUrl, $m)) {
+        return 'https://www.youtube.com/embed/' . $m[1];
+    }
+    // 6. youtube.com/live/<id>
+    if (preg_match('/youtube\.com\/live\/([a-zA-Z0-9_-]+)/', $videoUrl, $m)) {
+        return 'https://www.youtube.com/embed/' . $m[1];
+    }
+    // 7. Vimeo
+    if (preg_match('/vimeo\.com\/(?:video\/)?([0-9]+)/', $videoUrl, $m)) {
+        return 'https://player.vimeo.com/video/' . $m[1];
+    }
+
+    return $videoUrl;
+}
+
+$videos = [];
+foreach (($testimonial_data['data']['sections'] ?? []) as $sec) {
+    if (($sec['section_type'] ?? '') === 'video' || ($sec['layout'] ?? '') === 'video' || stripos($sec['title'] ?? '', 'video') !== false) {
+        $found = $sec['resolved_content']['media'] ?? [];
+        if (!empty($found)) {
+            $videos = $found;
+            break;
+        }
+    }
+}
+if (empty($videos)) {
+    $videos = $testimonial_data['data']['sections'][2]['resolved_content']['media'] ?? [];
+}
+
+// Fallback: if cache didn't have videos, fetch fresh testimonials page from API
+if (empty($videos)) {
+    $endpoint = 'https://dps.allenhouseschools.com/api/pages/testimonials-page-jankipuram';
+    $ch = curl_init($endpoint);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_HTTPHEADER => api_auth_headers(),
+    ]);
+    $res = curl_exec($ch);
+    if ($res !== false) {
+        $decoded = json_decode($res, true);
+        if (!empty($decoded['data']['sections'])) {
+            $testimonial_data = $decoded;
+            foreach ($testimonial_data['data']['sections'] as $sec) {
+                if (($sec['section_type'] ?? '') === 'video' || ($sec['layout'] ?? '') === 'video' || stripos($sec['title'] ?? '', 'video') !== false) {
+                    $found = $sec['resolved_content']['media'] ?? [];
+                    if (!empty($found)) {
+                        $videos = $found;
+                        break;
+                    }
+                }
+            }
+            if (empty($videos)) {
+                $videos = $testimonial_data['data']['sections'][2]['resolved_content']['media'] ?? [];
+            }
+        }
+    }
+    curl_close($ch);
+}
+
+$image_testimonials = [];
+foreach (($testimonial_data['data']['sections'] ?? []) as $sec) {
+    if (($sec['section_type'] ?? '') === 'carousel' || ($sec['layout'] ?? '') === 'carousel' || stripos($sec['title'] ?? '', 'content') !== false) {
+        $found = $sec['resolved_content']['items'] ?? [];
+        if (!empty($found)) {
+            $image_testimonials = $found;
+            break;
+        }
+    }
+}
+if (empty($image_testimonials)) {
+    $image_testimonials = $home_data['data']['sections'][10]['resolved_content']['items'] ?? [];
+}
 ?>
 <html lang="en">
 
@@ -23,16 +119,21 @@ include "includes/apis.php";
         ul.tabs {
             padding: 0px;
             list-style: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 20px;
         }
 
         ul.tabs li {
-            background: none;
             color: #003618;
             display: inline-block;
-            padding: 10px 15px;
+            padding: 10px 18px;
             cursor: pointer;
-
             background: #ededed;
+            border-radius: 4px;
+            font-weight: 600;
         }
 
         @media (max-width: 640px) {
@@ -230,39 +331,38 @@ include "includes/apis.php";
 
                         <div class="relative  sm:pt-5 pt-2 ">
 
-                            <ul class="tabs 2xl:ml-[432px] md:ml-[298px]  ml-[6px]">
+                            <ul class="tabs text-center">
                                 <li class="tab-link current" data-tab="tab-1">Image Testimonials</li>
                                 <li class="tab-link" data-tab="tab-2">Video Testimonials</li>
                             </ul>
 
                             <div id="tab-1" class="tab-content current Testimonials">
-                                <div class=" overflow-hidden mt-1" data-glide-el="track">
+                                <div class="overflow-hidden mt-1" data-glide-el="track">
                                     <ul class="glide__slides">
                                         <?php
-                                        $testimonial_data =  $home_data['data']['sections'][10]['resolved_content']['items'] ?? [];
-                                          if (empty($testimonial_data)) {
-                                            echo "<p>No data available</p>";
+                                        if (empty($image_testimonials)) {
+                                            echo "<li class='text-center w-full py-8 text-gray-500'>No data available</li>";
                                         } else {
-                                        foreach ($testimonial_data as $data) {
-                                            ?>
-                                            <li
-                                                class=" sm:flex items-start gap-2 mb-4 border-[1px] border-gray-300 p-3 rounded-[8px] bg-blue-main">
-                                                <div class="text-center sm:w-[30%] w-[90%]">
-                                                    <img src="<?= $api_url ?>/<?= $data['image_url'] ?? "" ?>" alt="<?= htmlspecialchars(cms_image_alt($data, 'Testimonial')) ?>"
-                                                        class="mb-2 mx-auto rounded-[10px] w-[130px] h-[130px]">
-                                                    <h2 class="font-[700] text-[16px] text-gray-100">
-                                                        <?= $data['title'] ?? "" ?></h2>
-                                                </div>
-                                                <div class="sm:w-[50%] w-[90%] sm:mt-0 mt-3 sm:text-left text-center ">
-                                                    <p
-                                                        class="testimonial-text text-[16px] text-gray-200 text-center sm:text-left clamp-2">
-                                                        <?= strip_tags($data['description']) ?? "" ?>
-                                                    </p>
-                                                    <button class="moreless-button font-[600] text-white text-sm mt-1">Read
-                                                        more...</button>
-                                                </div>
-                                            </li>
-                                        <?php
+                                            foreach ($image_testimonials as $data) {
+                                                ?>
+                                                <li
+                                                    class=" sm:flex items-start gap-2 mb-4 border-[1px] border-gray-300 p-3 rounded-[8px] bg-blue-main">
+                                                    <div class="text-center sm:w-[30%] w-[90%]">
+                                                        <img src="<?= $api_url ?>/<?= $data['image_url'] ?? "" ?>" alt="<?= htmlspecialchars(cms_image_alt($data, 'Testimonial')) ?>"
+                                                            class="mb-2 mx-auto rounded-[10px] w-[130px] h-[130px]">
+                                                        <h2 class="font-[700] text-[16px] text-gray-100">
+                                                            <?= $data['title'] ?? "" ?></h2>
+                                                    </div>
+                                                    <div class="sm:w-[50%] w-[90%] sm:mt-0 mt-3 sm:text-left text-center ">
+                                                        <p
+                                                            class="testimonial-text text-[16px] text-gray-200 text-center sm:text-left clamp-2">
+                                                            <?= strip_tags($data['description']) ?? "" ?>
+                                                        </p>
+                                                        <button class="moreless-button font-[600] text-white text-sm mt-1">Read
+                                                            more...</button>
+                                                    </div>
+                                                </li>
+                                            <?php
                                             }
                                         }
                                         ?>
@@ -271,42 +371,46 @@ include "includes/apis.php";
                             </div>
 
                             <div id="tab-2" class="tab-content Testimonials2">
-                                <div class=" overflow-hidden mt-1" data-glide-el="track">
-                                    <ul
-                                        class="mt-1 relative w-full overflow-hidden p-0 pb-5 whitespace-no-wrap flex gap-3 flex-no-wrap">
-
+                                <div class="overflow-hidden mt-1" data-glide-el="track">
+                                    <ul class="glide__slides">
                                         <?php
-                                     
-
                                         if (empty($videos)) {
-                                            echo "<p>No data available</p>";
+                                            echo "<li class='text-center w-full py-8 text-gray-500'>No data available</li>";
                                         } else {
+                                            $hasValidVideo = false;
                                             foreach ($videos as $video) {
-                                                $videoUrl = $video["media_url"] ?? '';
-                                                $embedUrl = "";
+                                                $mediaFile = $video["media_file"] ?? '';
+                                                $mediaUrl = $video["media_url"] ?? $video["video_url"] ?? '';
+                                                $embedUrl = dps_get_youtube_embed_url($mediaUrl);
 
-                                                if (strpos($videoUrl, 'youtube') !== false) {
-                                                    // Extract video ID
-                                                    preg_match('/(youtu\.be\/|v=)([^&]+)/', $videoUrl, $matches);
-                                                    $videoId = $matches[2] ?? '';
-
-                                                    if ($videoId) {
-                                                        $embedUrl = "https://www.youtube.com/embed/" . $videoId;
-                                                    }
+                                                if (empty($embedUrl) && empty($mediaFile)) {
+                                                    continue;
                                                 }
+                                                $hasValidVideo = true;
                                                 ?>
-                                                <li>
-                                                    <div class="w-full rounded-2xl shadow-lg sm:p-5 p-2">
-                                                        <iframe class="w-[100%] h-[300px]" src="<?php echo $embedUrl; ?>"
-                                                            allowfullscreen></iframe>
+                                                <li class="video-slide p-2">
+                                                    <div class="w-full rounded-2xl shadow-lg bg-white overflow-hidden p-2 sm:p-3 border border-gray-200">
+                                                        <?php if (!empty($mediaFile)) { ?>
+                                                            <video class="w-full h-[240px] sm:h-[300px] rounded-xl object-cover" controls>
+                                                                <source src="<?= $api_url ?>/<?= ltrim($mediaFile, '/') ?>" type="video/mp4">
+                                                            </video>
+                                                        <?php } else { ?>
+                                                            <iframe class="w-full h-[240px] sm:h-[300px] rounded-xl"
+                                                                src="<?= htmlspecialchars($embedUrl, ENT_QUOTES, 'UTF-8') ?>"
+                                                                frameborder="0"
+                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                                allowfullscreen>
+                                                            </iframe>
+                                                        <?php } ?>
                                                     </div>
                                                 </li>
                                             <?php
                                             }
+                                            if (!$hasValidVideo) {
+                                                echo "<li class='text-center w-full py-8 text-gray-500'>No data available</li>";
+                                            }
                                         }
                                         ?>
-
-
                                     </ul>
                                 </div>
                             </div>
@@ -324,64 +428,49 @@ include "includes/apis.php";
     <?php include "includes/foot.php" ?>
 
     <script>
- 
-        let glide1Initialized = false;
-        let glide2Initialized = false;
+        let glide1 = null;
+        let glide2 = null;
 
         function initGlide(selector, perViewCount) {
+            const slideCount = document.querySelectorAll(selector + ' .glide__slides > li').length;
+            const perView = Math.min(perViewCount || 2, Math.max(1, slideCount));
             return new Glide(selector, {
-                type: 'carousel',
-                focusAt: 1,
-                perView: perViewCount,
-                autoplay: 3500,
-                animationDuration: 700,
-                gap: 10,
+                type: slideCount > 1 ? 'carousel' : 'slider',
+                focusAt: 0,
+                perView: perView,
+                gap: 16,
+                peek: 0,
+                autoplay: slideCount > 1 ? 4000 : false,
+                hoverpause: true,
+                animationDuration: 600,
                 breakpoints: {
                     1680: {
-                        perView: perViewCount >= 4 ? 3 : 2
+                        perView: Math.min(perViewCount >= 4 ? 3 : 2, Math.max(1, slideCount)),
+                        gap: 16
                     },
                     1024: {
-                        perView: perViewCount >= 4 ? 2 : 2
+                        perView: Math.min(2, Math.max(1, slideCount)),
+                        gap: 16
                     },
                     820: {
-                        perView: 1
+                        perView: 1,
+                        gap: 12
                     },
                     640: {
-                        perView: 1
+                        perView: 1,
+                        gap: 12
                     }
                 }
             });
         }
 
-        
-        const glide1 = initGlide('.Testimonials', 2);
-        glide1.mount();
-        glide1Initialized = true;
-
-        
-        document.querySelectorAll('.tab-link').forEach(tab => {
-            tab.addEventListener('click', function () {
-                const tabId = this.getAttribute('data-tab');
-
-               
-                document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('current'));
-                this.classList.add('current');
-
-               
-                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('current'));
-                document.getElementById(tabId).classList.add('current');
-
-                
-                if (tabId === 'tab-2' && !glide2Initialized) {
-                    const glide2 = initGlide('.Testimonials2', 2);
-                    glide2.mount();
-                    glide2Initialized = true;
-                }
-            });
-        });
-    </script>
-    <script>
         document.addEventListener("DOMContentLoaded", function () {
+            const slideCount1 = document.querySelectorAll('.Testimonials .glide__slides > li:not(.text-center)').length;
+            if (slideCount1 > 0) {
+                glide1 = initGlide('.Testimonials', 2);
+                glide1.mount();
+            }
+
             const tabs = document.querySelectorAll(".tab-link");
             const contents = document.querySelectorAll(".tab-content");
 
@@ -389,52 +478,51 @@ include "includes/apis.php";
                 tab.addEventListener("click", function () {
                     const tabId = this.getAttribute("data-tab");
 
-                    
                     tabs.forEach(t => t.classList.remove("current"));
                     contents.forEach(c => c.classList.remove("current"));
 
-                   
                     this.classList.add("current");
-                    document.getElementById(tabId).classList.add("current");
+                    const targetContent = document.getElementById(tabId);
+                    if (targetContent) {
+                        targetContent.classList.add("current");
+                    }
 
-                   
-                    if (tabId !== "tab-2") {
-                        const videos = document.querySelectorAll("#tab-2 video");
-                        videos.forEach(video => {
-                            video.pause();
-                            video.currentTime = 0;
+                    if (tabId === "tab-2") {
+                        const slideCount2 = document.querySelectorAll('.Testimonials2 .glide__slides > li:not(.text-center)').length;
+                        if (slideCount2 > 0) {
+                            if (!glide2) {
+                                glide2 = initGlide('.Testimonials2', 2);
+                                glide2.mount();
+                            } else {
+                                setTimeout(() => glide2.update(), 50);
+                            }
+                        }
+                    } else {
+                        const iframes = document.querySelectorAll("#tab-2 iframe");
+                        iframes.forEach(f => {
+                            const src = f.src;
+                            f.src = src;
                         });
+                        const videos = document.querySelectorAll("#tab-2 video");
+                        videos.forEach(v => {
+                            v.pause();
+                            v.currentTime = 0;
+                        });
+                        if (glide1) {
+                            setTimeout(() => glide1.update(), 50);
+                        }
                     }
                 });
             });
-        });
-    </script>
 
-    <script>
-        $('.moreless-button').click(function () {
-            const moreText = $(this).siblings('.moretext');
-            moreText.slideToggle();
-
-            if ($(this).text() == "Read less") {
-                $(this).text("Read more...");
-            } else {
-                $(this).text("Read less");
-            }
-        });
-    </script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
             const buttons = document.querySelectorAll(".moreless-button");
-
             buttons.forEach(button => {
                 button.addEventListener("click", function () {
                     const para = this.previousElementSibling;
+                    if (!para) return;
                     para.classList.toggle("expanded");
                     para.classList.toggle("clamp-2");
-
-                    this.textContent = para.classList.contains("expanded") ? "Read less" :
-                        "Read more...";
+                    this.textContent = para.classList.contains("expanded") ? "Read less" : "Read more...";
                 });
             });
         });
